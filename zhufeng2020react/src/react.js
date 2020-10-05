@@ -1,3 +1,5 @@
+import Component from './Component.js'
+
 function createElement(type,config,children){
   if(config){
     delete config.__source;
@@ -14,5 +16,6 @@ function createElement(type,config,children){
 }
 
 export default {
-  createElement
+  createElement,
+  Component
 }

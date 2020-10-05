@@ -3,15 +3,44 @@ function render(vdom, parentDOM){
   parentDOM.appendChild(dom)
 }
 
-function createDOM(vdom){
-  if( typeof vdom === 'string' || typeof vdom === 'number' ) {
-    return document.createTextNode(vdom)
+function createDOM(virtualDOM){
+  if( typeof virtualDOM === 'string' || typeof virtualDOM === 'number' ) {
+    return document.createTextNode(virtualDOM)
   }
-  let { type, props } = vdom
-  let dom = document.createElement(type)
+  let { type, props } = virtualDOM
+  let dom 
+  if(typeof type === 'function'){
+    return type.prototype.isReactComponent ? updateClassComponent(virtualDOM) : updateFunctionComponent(virtualDOM)
+  } else {
+    dom = document.createElement(type)
+  }
+
   updateProps(dom, props)
-  reconcileChildren(props.children, dom)
+ 
+  if(typeof props.children === 'string' || typeof props.children === 'number') {
+    dom.textContent = props.children
+  } else if (typeof props.children == 'object' && !Array.isArray(props.children)){
+    render(props.children, dom)
+  } else if(Array.isArray(props.children)) {
+    reconcileChildren(props.children, dom)
+  } else {
+    dom.textContent = props.children.toString()
+  }
+
   return dom
+}
+
+function updateFunctionComponent(virtualDOM){
+  let {type, props} = virtualDOM
+  let renderVirtualDOM = type(props)
+  return createDOM(renderVirtualDOM)
+}
+
+function updateClassComponent(virtualDOM){
+  let {type:ClassComponent, props} = virtualDOM
+  let classInstance = new ClassComponent(props)
+  let renderVirtualDOM = classInstance.render()
+  return createDOM(renderVirtualDOM)
 }
 
 function reconcileChildren(children,parentDOM){
